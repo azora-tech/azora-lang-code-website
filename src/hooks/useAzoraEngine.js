@@ -1,0 +1,78 @@
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { loadWasmEngine } from '../engine/wasmLoader.js'
+
+export default function useAzoraEngine(version) {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const engineRef = useRef(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+
+    loadWasmEngine(version)
+      .then((engine) => {
+        if (!cancelled) {
+          engineRef.current = engine
+          setLoading(false)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err.message || 'Failed to load WASM engine')
+          setLoading(false)
+        }
+      })
+
+    return () => { cancelled = true }
+  }, [version])
+
+  const preprocess = useCallback((source) => {
+    if (!engineRef.current) return { success: false, output: '', errors: 'Engine not loaded' }
+    return engineRef.current.preprocess(source)
+  }, [])
+
+  const interpret = useCallback(async (source) => {
+    if (!engineRef.current) return { success: false, output: '', errors: 'Engine not loaded' }
+    return engineRef.current.interpret(source)
+  }, [])
+
+  const generateKotlin = useCallback((source) => {
+    if (!engineRef.current) return { success: false, output: '', errors: 'Engine not loaded' }
+    return engineRef.current.generateKotlin(source)
+  }, [])
+
+  const generateCSharp = useCallback((source) => {
+    if (!engineRef.current) return { success: false, output: '', errors: 'Engine not loaded' }
+    return engineRef.current.generateCSharp(source)
+  }, [])
+
+  const generateJavaScript = useCallback((source) => {
+    if (!engineRef.current) return { success: false, output: '', errors: 'Engine not loaded' }
+    return engineRef.current.generateJavaScript(source)
+  }, [])
+
+  const generateLlvmIr = useCallback((source) => {
+    if (!engineRef.current) return { success: false, output: '', errors: 'Engine not loaded' }
+    return engineRef.current.generateLlvmIr(source)
+  }, [])
+
+  const runTests = useCallback(async (source) => {
+    if (!engineRef.current) return { success: false, output: '', errors: 'Engine not loaded' }
+    return engineRef.current.runTests(source)
+  }, [])
+
+  return {
+    loading,
+    error,
+    ready: !loading && !error,
+    preprocess,
+    interpret,
+    generateKotlin,
+    generateCSharp,
+    generateJavaScript,
+    generateLlvmIr,
+    runTests,
+  }
+}

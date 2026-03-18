@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme {
+  /* Azora Neutral Scale */
+  --color-az-10: #FBFBFB;
+  --color-az-15: #F9F9F9;
+  --color-az-20: #ECECEC;
+  --color-az-25: #E2E2E2;
+  --color-az-30: #D9D9D9;
+  --color-az-35: #C4C4C4;
+  --color-az-40: #B2B3B3;
+  --color-az-45: #A6A6A6;
+  --color-az-50: #9B9B9B;
+  --color-az-neutral: #818181;
+  --color-az-60: #676767;
+  --color-az-65: #4C4C4C;
+  --color-az-70: #313131;
+  --color-az-75: #2C2C2C;
+  --color-az-80: #262626;
+  --color-az-85: #202020;
+  --color-az-90: #1A1A1A;
+  --color-az-95: #141414;
+
+  /* Azora Brand */
+  --color-az-primary: #D14EEA;
+  --color-az-secondary: #4E93EA;
+
+  /* Azora Accents */
+  --color-az-green: #4EC962;
+  --color-az-red: #E63946;
+  --color-az-orange: #FF8C00;
+  --color-az-yellow: #FFC107;
+
+  /* Azora Pastel (syntax) */
+  --color-pastel-pink: #D16B8E;
+  --color-pastel-teal: #5FA89F;
+  --color-pastel-blue: #5BA3D0;
+  --color-pastel-orange: #D4A574;
+  --color-pastel-green: #7DBF8A;
+  --color-pastel-yellow: #E6C96B;
+  --color-pastel-red: #D17179;
+  --color-pastel-purple: #B06FA8;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+
+html {
+  background-color: var(--color-az-90);
+  color: var(--color-az-10);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-az-65);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-az-60);
+}
+
+.cm-editor {
+  height: 100%;
+}
+.cm-editor .cm-scroller {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+}
