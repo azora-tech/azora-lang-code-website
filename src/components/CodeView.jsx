@@ -3,6 +3,8 @@ import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import kotlin from 'react-syntax-highlighter/dist/esm/languages/prism/kotlin'
 import csharp from 'react-syntax-highlighter/dist/esm/languages/prism/csharp'
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript'
+import python from 'react-syntax-highlighter/dist/esm/languages/prism/python'
+import swift from 'react-syntax-highlighter/dist/esm/languages/prism/swift'
 import llvm from 'react-syntax-highlighter/dist/esm/languages/prism/llvm'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import azora from '../data/azora-prism.js'
@@ -10,6 +12,8 @@ import azora from '../data/azora-prism.js'
 SyntaxHighlighter.registerLanguage('kotlin', kotlin)
 SyntaxHighlighter.registerLanguage('csharp', csharp)
 SyntaxHighlighter.registerLanguage('javascript', javascript)
+SyntaxHighlighter.registerLanguage('python', python)
+SyntaxHighlighter.registerLanguage('swift', swift)
 SyntaxHighlighter.registerLanguage('llvm', llvm)
 SyntaxHighlighter.registerLanguage('azora', azora)
 

@@ -8,6 +8,8 @@ import { getDefaultVersion } from './engine/versions.js'
 import { runKotlin } from './engine/kotlinRunner.js'
 import { runCSharp } from './engine/csharpRunner.js'
 import { runJavaScript } from './engine/javascriptRunner.js'
+import { runPython } from './engine/pythonRunner.js'
+import { runSwift } from './engine/swiftRunner.js'
 import { runLlvmIr } from './engine/llvmRunner.js'
 
 const LS_CODE_KEY = 'azora-playground-code'
@@ -29,7 +31,7 @@ export default function App() {
   const [target, setTarget] = useState(() => loadSaved(LS_TARGET_KEY, 'interpreted'))
   const [activeTab, setActiveTab] = useState('console')
   const [isRunning, setIsRunning] = useState(false)
-  const [results, setResults] = useState({ console: [], preprocessed: '', kotlin: '', csharp: '', javascript: '', llvmIr: '' })
+  const [results, setResults] = useState({ console: [], preprocessed: '', kotlin: '', csharp: '', javascript: '', llvmIr: '', python: '', swift: '' })
 
   const engine = useAzoraEngine(version)
 
@@ -44,6 +46,8 @@ export default function App() {
 
   useEffect(() => {
     try { localStorage.setItem(LS_TARGET_KEY, target) } catch {}
+    // Clear console when switching targets
+    setResults(prev => ({ ...prev, console: [] }))
     // If switching away from a target while on its tab, switch to console
     if (target !== 'kotlin-jvm' && activeTab === 'kotlin') {
       setActiveTab('console')
@@ -55,6 +59,12 @@ export default function App() {
       setActiveTab('console')
     }
     if (target !== 'llvm-ir' && activeTab === 'llvm-ir') {
+      setActiveTab('console')
+    }
+    if (target !== 'python' && activeTab === 'python') {
+      setActiveTab('console')
+    }
+    if (target !== 'swift' && activeTab === 'swift') {
       setActiveTab('console')
     }
   }, [target])
@@ -117,6 +127,26 @@ export default function App() {
         llvmIr: irResult.success ? irResult.output : `; Error:\n; ${irResult.errors}`,
       }))
     } catch {}
+  }, [code, target, engine.ready, engine])
+
+  // Live Python codegen when target is python
+  useEffect(() => {
+    if (!engine.ready || target !== 'python') return
+    const pyResult = engine.generatePython(code)
+    setResults(prev => ({
+      ...prev,
+      python: pyResult.success ? pyResult.output : `# Error:\n# ${pyResult.errors}`,
+    }))
+  }, [code, target, engine.ready, engine])
+
+  // Live Swift codegen when target is swift
+  useEffect(() => {
+    if (!engine.ready || target !== 'swift') return
+    const swResult = engine.generateSwift(code)
+    setResults(prev => ({
+      ...prev,
+      swift: swResult.success ? swResult.output : `// Error:\n// ${swResult.errors}`,
+    }))
   }, [code, target, engine.ready, engine])
 
   const parseOutput = useCallback((result) => {
@@ -247,6 +277,62 @@ export default function App() {
           ...prev,
           console: parseOutput(runResult),
         }))
+      } else if (target === 'python') {
+        const pyResult = engine.generatePython(code)
+        const pythonCode = pyResult.success ? pyResult.output : null
+
+        setResults(prev => ({
+          ...prev,
+          python: pyResult.success ? pyResult.output : `# Error:\n# ${pyResult.errors}`,
+        }))
+
+        if (!pythonCode) {
+          setResults(prev => ({
+            ...prev,
+            console: [{ text: `Python codegen failed: ${pyResult.errors}`, type: 'error' }],
+          }))
+          return
+        }
+
+        setResults(prev => ({
+          ...prev,
+          console: [{ text: 'Running Python via Godbolt...', type: 'output' }],
+        }))
+
+        const runResult = await runPython(pythonCode)
+        const pyMessages = parseOutput(runResult)
+        setResults(prev => ({
+          ...prev,
+          console: pyMessages.length > 0 ? pyMessages : [{ text: '(no output)', type: 'output' }],
+        }))
+      } else if (target === 'swift') {
+        const swResult = engine.generateSwift(code)
+        const swiftCode = swResult.success ? swResult.output : null
+
+        setResults(prev => ({
+          ...prev,
+          swift: swResult.success ? swResult.output : `// Error:\n// ${swResult.errors}`,
+        }))
+
+        if (!swiftCode) {
+          setResults(prev => ({
+            ...prev,
+            console: [{ text: `Swift codegen failed: ${swResult.errors}`, type: 'error' }],
+          }))
+          return
+        }
+
+        setResults(prev => ({
+          ...prev,
+          console: [{ text: 'Running Swift via Godbolt...', type: 'output' }],
+        }))
+
+        const runResult = await runSwift(swiftCode)
+        const swMessages = parseOutput(runResult)
+        setResults(prev => ({
+          ...prev,
+          console: swMessages.length > 0 ? swMessages : [{ text: '(no output)', type: 'output' }],
+        }))
       } else {
         // Interpreted target — run via WASM interpreter
         const interpretResult = await engine.interpret(code)
@@ -322,6 +408,7 @@ export default function App() {
         onRunTests={handleRunTests}
         isRunning={isRunning}
         engineReady={engine.ready}
+        onLoadExample={setCode}
       />
 
       <div className="flex-1 flex flex-col md:flex-row min-h-0">

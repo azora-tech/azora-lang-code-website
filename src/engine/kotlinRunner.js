@@ -1,4 +1,4 @@
-const COMPILER_URL = 'https://api.kotlinlang.org/api/2.3.10/compiler/run'
+const COMPILER_URL = 'https://api.kotlinlang.org/api/2.3.20/compiler/run'
 
 export async function runKotlin(kotlinCode) {
   const body = {

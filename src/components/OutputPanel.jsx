@@ -7,6 +7,8 @@ const ALL_TABS = [
   { id: 'kotlin', label: 'Kotlin' },
   { id: 'csharp', label: 'C#' },
   { id: 'javascript', label: 'JavaScript' },
+  { id: 'python', label: 'Python' },
+  { id: 'swift', label: 'Swift' },
   { id: 'llvm-ir', label: 'LLVM IR' },
 ]
 
@@ -17,11 +19,15 @@ export default function OutputPanel({ activeTab, onTabChange, results, target })
   const kotlinCode = results?.kotlin || ''
   const csharpCode = results?.csharp || ''
   const javascriptCode = results?.javascript || ''
+  const pythonCode = results?.python || ''
+  const swiftCode = results?.swift || ''
   const llvmIrCode = results?.llvmIr || ''
   const tabs = ALL_TABS.filter(t => {
     if (t.id === 'kotlin') return target === 'kotlin-jvm'
     if (t.id === 'csharp') return target === 'csharp-dotnet'
     if (t.id === 'javascript') return target === 'javascript'
+    if (t.id === 'python') return target === 'python'
+    if (t.id === 'swift') return target === 'swift'
     if (t.id === 'llvm-ir') return target === 'llvm-ir'
     return true
   })
@@ -65,6 +71,12 @@ export default function OutputPanel({ activeTab, onTabChange, results, target })
         )}
         {activeTab === 'javascript' && target === 'javascript' && (
           <CodeView code={javascriptCode} language="javascript" />
+        )}
+        {activeTab === 'python' && target === 'python' && (
+          <CodeView code={pythonCode} language="python" />
+        )}
+        {activeTab === 'swift' && target === 'swift' && (
+          <CodeView code={swiftCode} language="swift" />
         )}
         {activeTab === 'llvm-ir' && target === 'llvm-ir' && (
           <CodeView code={llvmIrCode} language="llvm" />

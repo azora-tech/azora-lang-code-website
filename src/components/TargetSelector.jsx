@@ -1,9 +1,10 @@
 export const TARGETS = [
   { id: 'interpreted', label: 'Interpreted' },
-  { id: 'kotlin-jvm', label: 'Kotlin-JVM 2.3.10' },
+  { id: 'kotlin-jvm', label: 'Kotlin-JVM 2.3.20' },
   { id: 'csharp-dotnet', label: 'C# .NET 10' },
   { id: 'javascript', label: 'JavaScript' },
-  { id: 'llvm-ir', label: 'LLVM 22.1' },
+  { id: 'python', label: 'Python 3' },
+  { id: 'swift', label: 'Swift 6.2' },
 ]
 
 export default function TargetSelector({ target, onChange }) {

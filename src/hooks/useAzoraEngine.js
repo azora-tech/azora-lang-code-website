@@ -58,6 +58,16 @@ export default function useAzoraEngine(version) {
     return engineRef.current.generateLlvmIr(source)
   }, [])
 
+  const generatePython = useCallback((source) => {
+    if (!engineRef.current) return { success: false, output: '', errors: 'Engine not loaded' }
+    return engineRef.current.generatePython(source)
+  }, [])
+
+  const generateSwift = useCallback((source) => {
+    if (!engineRef.current) return { success: false, output: '', errors: 'Engine not loaded' }
+    return engineRef.current.generateSwift(source)
+  }, [])
+
   const runTests = useCallback(async (source) => {
     if (!engineRef.current) return { success: false, output: '', errors: 'Engine not loaded' }
     return engineRef.current.runTests(source)
@@ -73,6 +83,8 @@ export default function useAzoraEngine(version) {
     generateCSharp,
     generateJavaScript,
     generateLlvmIr,
+    generatePython,
+    generateSwift,
     runTests,
   }
 }

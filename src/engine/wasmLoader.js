@@ -2,25 +2,19 @@ export async function loadWasmEngine(version) {
   const basePath = `${import.meta.env.BASE_URL}wasm/${version}`
   const cacheBust = `?t=${Date.now()}`
 
-  // Remove previous script tag and module state so we always reload fresh WASM
   const oldScript = document.querySelector('script[data-azora-wasm]')
   if (oldScript) oldScript.remove()
-  delete window.script
 
-  // Load the Kotlin/Wasm webpack bundle via script tag.
-  // It registers as UMD: globalThis.script = <Promise>
-  // The Promise resolves with the module exports after WASM initialization.
   await new Promise((resolve, reject) => {
     const script = document.createElement('script')
     script.setAttribute('data-azora-wasm', 'true')
-    script.src = `${basePath}/composeApp.js${cacheBust}`
+    script.src = `${basePath}/azoraLang.js${cacheBust}`
     script.onload = () => resolve()
     script.onerror = () => reject(new Error(`Failed to load WASM bundle for version ${version}`))
     document.head.appendChild(script)
   })
 
-  // window.script is a Promise — await it to get the actual exports
-  const ns = await window.script
+  const ns = await waitForExports()
 
   return {
     preprocess(source) {
@@ -34,7 +28,6 @@ export async function loadWasmEngine(version) {
 
     async interpret(source) {
       try {
-        // azInterpret returns a JS Promise that resolves with a JsString
         const json = await ns.azInterpret(source)
         return JSON.parse(json)
       } catch (e) {
@@ -78,9 +71,26 @@ export async function loadWasmEngine(version) {
       }
     },
 
+    generatePython(source) {
+      try {
+        const json = ns.azGeneratePython(source)
+        return JSON.parse(json)
+      } catch (e) {
+        return { success: false, output: '', errors: e.message || String(e) }
+      }
+    },
+
+    generateSwift(source) {
+      try {
+        const json = ns.azGenerateSwift(source)
+        return JSON.parse(json)
+      } catch (e) {
+        return { success: false, output: '', errors: e.message || String(e) }
+      }
+    },
+
     async runTests(source) {
       try {
-        // azRunTests returns a JS Promise that resolves with a JsString
         const json = await ns.azRunTests(source)
         return JSON.parse(json)
       } catch (e) {
@@ -96,4 +106,23 @@ export async function loadWasmEngine(version) {
       }
     },
   }
+}
+
+async function waitForExports(maxAttempts = 200) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const mod = globalThis.compiler
+    if (mod) {
+      try {
+        const resolved = await mod
+        if (resolved && typeof resolved.azInterpret === 'function') {
+          return resolved
+        }
+      } catch (_) {}
+      if (typeof mod.azInterpret === 'function') {
+        return mod
+      }
+    }
+    await new Promise(r => setTimeout(r, 50))
+  }
+  throw new Error('WASM module did not initialize within timeout')
 }
