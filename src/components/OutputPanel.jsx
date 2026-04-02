@@ -2,11 +2,11 @@ import ConsoleOutput from './ConsoleOutput.jsx'
 import CodeView from './CodeView.jsx'
 
 const ALL_TABS = [
-  { id: 'console', label: 'Console' },
-  { id: 'preprocessed', label: 'Preprocessed' },
+  { id: 'console', label: 'Output' },
+  { id: 'preprocessed', label: 'Azora IR' },
   { id: 'kotlin', label: 'Kotlin' },
   { id: 'csharp', label: 'C#' },
-  { id: 'javascript', label: 'JavaScript' },
+  { id: 'javascript', label: 'TypeScript' },
   { id: 'python', label: 'Python' },
   { id: 'swift', label: 'Swift' },
   { id: 'llvm-ir', label: 'LLVM IR' },
@@ -70,7 +70,7 @@ export default function OutputPanel({ activeTab, onTabChange, results, target })
           <CodeView code={csharpCode} language="csharp" />
         )}
         {activeTab === 'javascript' && target === 'javascript' && (
-          <CodeView code={javascriptCode} language="javascript" />
+          <CodeView code={javascriptCode} language="typescript" />
         )}
         {activeTab === 'python' && target === 'python' && (
           <CodeView code={pythonCode} language="python" />

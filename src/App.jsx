@@ -4,7 +4,7 @@ import CodeEditor from './components/CodeEditor.jsx'
 import OutputPanel from './components/OutputPanel.jsx'
 import useAzoraEngine from './hooks/useAzoraEngine.js'
 import { SAMPLE_CODE } from './data/sampleCode.js'
-import { getDefaultVersion } from './engine/versions.js'
+import { getDefaultVersion, isValidVersion } from './engine/versions.js'
 import { runKotlin } from './engine/kotlinRunner.js'
 import { runCSharp } from './engine/csharpRunner.js'
 import { runJavaScript } from './engine/javascriptRunner.js'
@@ -27,7 +27,10 @@ function loadSaved(key, fallback) {
 
 export default function App() {
   const [code, setCode] = useState(() => loadSaved(LS_CODE_KEY, SAMPLE_CODE))
-  const [version, setVersion] = useState(() => loadSaved(LS_VERSION_KEY, getDefaultVersion()))
+  const [version, setVersion] = useState(() => {
+    const saved = loadSaved(LS_VERSION_KEY, getDefaultVersion())
+    return isValidVersion(saved) ? saved : getDefaultVersion()
+  })
   const [target, setTarget] = useState(() => loadSaved(LS_TARGET_KEY, 'interpreted'))
   const [activeTab, setActiveTab] = useState('console')
   const [isRunning, setIsRunning] = useState(false)
@@ -406,6 +409,7 @@ export default function App() {
         onTargetChange={setTarget}
         onRun={handleRun}
         onRunTests={handleRunTests}
+        onClear={() => setResults({ console: [], preprocessed: '', kotlin: '', csharp: '', javascript: '', llvmIr: '', python: '', swift: '' })}
         isRunning={isRunning}
         engineReady={engine.ready}
         onLoadExample={setCode}

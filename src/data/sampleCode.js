@@ -1,3 +1,5 @@
-export const SAMPLE_CODE = `func main() {
+export const SAMPLE_CODE = `package playground
+
+func main() {
     println("Hello, world!")
 }`

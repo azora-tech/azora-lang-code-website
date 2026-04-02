@@ -1,46 +1,88 @@
-import { useState, useCallback } from 'react'
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
-import kotlin from 'react-syntax-highlighter/dist/esm/languages/prism/kotlin'
-import csharp from 'react-syntax-highlighter/dist/esm/languages/prism/csharp'
-import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript'
-import python from 'react-syntax-highlighter/dist/esm/languages/prism/python'
-import swift from 'react-syntax-highlighter/dist/esm/languages/prism/swift'
-import llvm from 'react-syntax-highlighter/dist/esm/languages/prism/llvm'
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import azora from '../data/azora-prism.js'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { EditorView } from '@codemirror/view'
+import { EditorState } from '@codemirror/state'
+import { StreamLanguage } from '@codemirror/language'
+import { lineNumbers } from '@codemirror/view'
+import { azoraTheme, azoraHighlight } from '../codemirror/azora-theme.js'
+import { azoraLanguage } from '../codemirror/azora-language.js'
 
-SyntaxHighlighter.registerLanguage('kotlin', kotlin)
-SyntaxHighlighter.registerLanguage('csharp', csharp)
-SyntaxHighlighter.registerLanguage('javascript', javascript)
-SyntaxHighlighter.registerLanguage('python', python)
-SyntaxHighlighter.registerLanguage('swift', swift)
-SyntaxHighlighter.registerLanguage('llvm', llvm)
-SyntaxHighlighter.registerLanguage('azora', azora)
+import { javascript } from '@codemirror/lang-javascript'
+import { python } from '@codemirror/lang-python'
+import { kotlin } from '@codemirror/legacy-modes/mode/clike'
 
-const customStyle = {
-  ...oneDark,
-  'pre[class*="language-"]': {
-    ...oneDark['pre[class*="language-"]'],
-    background: '#1A1A1A',
-    color: '#FBFBFB',
+const readOnlyTheme = EditorView.theme({
+  '.cm-gutters': {
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
   },
-  'code[class*="language-"]': {
-    ...oneDark['code[class*="language-"]'],
-    background: '#1A1A1A',
-    color: '#FBFBFB',
+  '.cm-content': {
+    fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+    fontSize: '14px',
+    lineHeight: '1.6',
   },
-  keyword: { color: '#D16B8E' },
-  function: { color: '#5BA3D0' },
-  string: { color: '#7DBF8A' },
-  number: { color: '#D4A574' },
-  boolean: { color: '#D4A574' },
-  comment: { color: '#676767' },
-  'class-name': { color: '#5FA89F' },
-  operator: { color: '#D14EEA' },
-  punctuation: { color: '#9B9B9B' },
-  builtin: { color: '#5BA3D0' },
-  annotation: { color: '#E6C96B' },
-  variable: { color: '#E6C96B' },
+  '.cm-gutters .cm-lineNumbers .cm-gutterElement': {
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+  },
+})
+
+const llvmMode = {
+  startState() { return {} },
+  token(stream) {
+    if (stream.match(/;.*/)) return 'comment'
+    if (stream.match(/"[^"]*"/)) return 'string'
+    if (stream.match(/c"[^"]*"/)) return 'string'
+    if (stream.match(/\b(define|declare|ret|br|call|alloca|store|load|getelementptr|icmp|fcmp|add|sub|mul|sdiv|udiv|fadd|fsub|fmul|fdiv|srem|and|or|xor|shl|ashr|lshr|trunc|zext|sext|bitcast|phi|select|switch|unreachable|inbounds|private|unnamed_addr|constant|global|type|to|label|entry|nuw|nsw|exact)\b/)) return 'keyword'
+    if (stream.match(/@[\w.$]+/)) return 'def'
+    if (stream.match(/%[\w.$]+/)) return 'variable'
+    if (stream.match(/\b(i1|i8|i16|i32|i64|i128|float|double|void|ptr|null|true|false|zeroinitializer|undef)\b/)) return 'type'
+    if (stream.match(/\b\d+\.?\d*\b/)) return 'number'
+    if (stream.match(/[{}()\[\],=*]/)) return 'punctuation'
+    stream.next()
+    return null
+  },
+}
+
+function ReadOnlyCodeMirror({ code, extensions = [] }) {
+  const containerRef = useRef(null)
+  const viewRef = useRef(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const state = EditorState.create({
+      doc: code || '',
+      extensions: [
+        EditorView.editable.of(false),
+        EditorState.readOnly.of(true),
+        azoraTheme,
+        azoraHighlight,
+        lineNumbers(),
+        readOnlyTheme,
+        ...extensions,
+      ],
+    })
+
+    if (viewRef.current) viewRef.current.destroy()
+    viewRef.current = new EditorView({ state, parent: containerRef.current })
+
+    return () => {
+      if (viewRef.current) { viewRef.current.destroy(); viewRef.current = null }
+    }
+  }, [code, extensions])
+
+  return <div ref={containerRef} className="h-full overflow-auto" />
+}
+
+const languageExtensions = {
+  azora: [azoraLanguage],
+  kotlin: [StreamLanguage.define(kotlin)],
+  typescript: [javascript({ typescript: true })],
+  javascript: [javascript({ typescript: true })],
+  csharp: [StreamLanguage.define(kotlin)],
+  python: [python()],
+  swift: [StreamLanguage.define(kotlin)],
+  llvm: [StreamLanguage.define(llvmMode)],
 }
 
 export default function CodeView({ code, language = 'kotlin' }) {
@@ -61,6 +103,8 @@ export default function CodeView({ code, language = 'kotlin' }) {
     )
   }
 
+  const extensions = languageExtensions[language] || []
+
   return (
     <div className="h-full overflow-auto relative group">
       <button
@@ -72,23 +116,7 @@ export default function CodeView({ code, language = 'kotlin' }) {
         {copied ? 'Copied!' : 'Copy'}
       </button>
 
-      <SyntaxHighlighter
-        language={language}
-        style={customStyle}
-        customStyle={{
-          margin: 0,
-          padding: '1rem',
-          background: '#1A1A1A',
-          minHeight: '100%',
-          fontSize: '14px',
-          lineHeight: '1.6',
-          fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
-        }}
-        showLineNumbers
-        lineNumberStyle={{ color: '#4C4C4C', minWidth: '2.5em' }}
-      >
-        {code}
-      </SyntaxHighlighter>
+      <ReadOnlyCodeMirror code={code} extensions={extensions} />
     </div>
   )
 }
